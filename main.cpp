@@ -32,7 +32,9 @@ static bool public_network = true;
 static uint8_t join_delay = 5;
 static uint8_t ack = 0;
 static bool adr = true;
-uint32_t sound;
+uint32_t average;
+float sum_sound;
+float instantaneous_sound;
 
 // deepsleep consumes slightly less current than sleep
 // in sleep mode, IO state is maintained, RAM is retained, and application will resume after waking up
@@ -46,6 +48,8 @@ lora::ChannelPlan* plan = NULL;
 Serial pc(USBTX, USBRX);
 
 MAX9814 mic(GPIO2);
+
+int count=0;
 
 int main()
 {
@@ -142,11 +146,22 @@ int main()
         }
 
 
-        mic.volume_indicator();
-        sound=ceil(mic.sound_level()*100);
-        logInfo("sound level is %d", sound); //ranges from 0 to 255
-
-        tx_data.push_back(sound);
+        //to get an average reading over 2.5seconds.
+        while(count<10) {
+            mic.volume_indicator();
+            instantaneous_sound=mic.sound_level()*100;
+            logInfo("sound level is %f", instantaneous_sound); //ranges from 0 to 255
+            sum_sound+=instantaneous_sound; 
+            wait_ms(250);
+            count++;
+        }
+        
+        average=ceil(sum_sound/count);
+        logInfo("average sound level is %d", average); //ranges from 0 to 255
+        sum_sound=0;
+        count=0;
+        
+        tx_data.push_back(average);
         send_data(tx_data);
 
         // ONLY ONE of the three functions below should be uncommented depending on the desired wakeup method
