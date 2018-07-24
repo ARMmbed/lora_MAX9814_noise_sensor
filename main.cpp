@@ -149,7 +149,7 @@ int main()
         //to get an average reading over 2.5seconds.
         while(count<10) {
             mic.volume_indicator();
-            instantaneous_sound=mic.sound_level()*100;
+            instantaneous_sound=(((mic.sound_level()*100)/255)*100); //Get in percentage
             logInfo("sound level is %f", instantaneous_sound); //ranges from 0 to 255
             sum_sound+=instantaneous_sound; 
             wait_ms(250);
